@@ -1,0 +1,257 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  username      String   @unique
+  firstName     String?
+  lastName      String?
+  walletAddress String?  @unique
+  isVerified    Boolean  @default(false)
+  isSuspended   Boolean  @default(false)
+  isAdmin       Boolean  @default(false)
+  avatar        String?
+  bio           String?
+  passwordHash  String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Compliance & Withdrawal Security Fields
+  withdrawalPinHash        String?
+  withdrawalPinEnc         String?
+  cotPinHash               String?
+  cotPinEnc                String?
+  taxCodeHash              String?
+  taxCodeEnc               String?
+  upgradeLevel             Int?
+  requireCommissionFee     Boolean  @default(false)
+  requireWithdrawalFee     Boolean  @default(false)
+  withdrawalPinValidated   Boolean  @default(false)
+  cotPinValidated          Boolean  @default(false)
+  taxCodeValidated         Boolean  @default(false)
+  upgradeCompleted         Boolean  @default(false)
+  commissionFeeAccepted    Boolean  @default(false)
+  withdrawalFeeAccepted    Boolean  @default(false)
+
+  // PIN security telemetry
+  withdrawalPinAttempts    Int      @default(0)
+  cotPinAttempts           Int      @default(0)
+  withdrawalPinLockedUntil DateTime?
+  cotPinLockedUntil        DateTime?
+  withdrawalPinLastChangedAt DateTime @default(now())
+  cotPinLastChangedAt        DateTime @default(now())
+
+  // Relations
+  nfts         NFT[]         @relation("CreatedNFTs")
+  ownedNFTs    NFT[]         @relation("OwnedNFTs")
+  collections  Collection[]
+  transactions Transaction[]
+  auctions     Auction[]
+  bids         Bid[]
+  stockPurchases StockPurchase[]
+  cryptoDepositAddresses CryptoDepositAddress[]
+  withdrawalRequests     WithdrawalRequest[]
+
+  @@map("users")
+}
+
+// User withdrawal requests
+model WithdrawalRequest {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Float
+  method    String   // e.g., 'crypto', 'paypal', 'bank'
+  currency  String   @default("USD")
+  details   String?
+  status    WithdrawalStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("withdrawal_requests")
+  @@index([userId, status])
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
+
+// Collection model
+model Collection {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  image       String?
+  slug        String   @unique
+  isVerified  Boolean  @default(false)
+  creatorId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  creator User  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  nfts    NFT[]
+
+  @@map("collections")
+}
+
+// NFT model
+model NFT {
+  id           String   @id @default(cuid())
+  tokenId      String   @unique
+  name         String
+  description  String?
+  image        String
+  price        Float?
+  category     String?
+  isListed     Boolean  @default(false)
+  isSold       Boolean  @default(false)
+  creatorId    String
+  ownerId      String?
+  collectionId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  creator      User          @relation("CreatedNFTs", fields: [creatorId], references: [id], onDelete: Cascade)
+  owner        User?         @relation("OwnedNFTs", fields: [ownerId], references: [id])
+  collection   Collection?   @relation(fields: [collectionId], references: [id])
+  transactions Transaction[]
+  auctions     Auction[]
+  bids         Bid[]
+
+  @@map("nfts")
+}
+
+// Transaction model
+model Transaction {
+  id              String          @id @default(cuid())
+  nftId           String?
+  userId          String
+  amount          Float
+  transactionHash String          @unique
+  type            TransactionType
+  createdAt       DateTime        @default(now())
+
+  // Relations
+  nft  NFT? @relation(fields: [nftId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+// Auction model
+model Auction {
+  id           String   @id @default(cuid())
+  nftId        String
+  sellerId     String
+  startPrice   Float
+  reservePrice Float?
+  currentPrice Float
+  startTime    DateTime
+  endTime      DateTime
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  nft    NFT   @relation(fields: [nftId], references: [id], onDelete: Cascade)
+  seller User  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  bids   Bid[]
+
+  @@map("auctions")
+}
+
+// Bid model
+model Bid {
+  id        String   @id @default(cuid())
+  auctionId String
+  nftId     String
+  bidderId  String
+  amount    Float
+  createdAt DateTime @default(now())
+
+  // Relations
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  nft     NFT     @relation(fields: [nftId], references: [id], onDelete: Cascade)
+  bidder  User    @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+
+  @@map("bids")
+}
+
+// SystemSetting model for admin configuration
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  category    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+// Enums
+enum TransactionType {
+  SALE
+  PURCHASE
+  MINT
+  TRANSFER
+  DEPOSIT
+  WITHDRAWAL
+}
+
+// Stock purchases for Fintech Stocks feature
+model StockPurchase {
+  id        String   @id @default(cuid())
+  userId    String
+  symbol    String
+  amountUSD Float
+  priceUSD  Float
+  shares    Float
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  lastProfitClaimAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("stock_purchases")
+  @@index([userId, symbol])
+}
+
+// Per-user crypto deposit addresses managed by admin
+model CryptoDepositAddress {
+  id        String   @id @default(cuid())
+  userId    String
+  asset     String
+  network   String
+  address   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, asset, network])
+  @@map("crypto_deposit_addresses")
+}

@@ -1,0 +1,8 @@
+-- Add persistent attempts and lockout fields for PINs
+ALTER TABLE "users"
+  ADD COLUMN IF NOT EXISTS "withdrawalPinAttempts" INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "cotPinAttempts" INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "withdrawalPinLockedUntil" TIMESTAMP NULL,
+  ADD COLUMN IF NOT EXISTS "cotPinLockedUntil" TIMESTAMP NULL,
+  ADD COLUMN IF NOT EXISTS "withdrawalPinLastChangedAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+  ADD COLUMN IF NOT EXISTS "cotPinLastChangedAt" TIMESTAMP NOT NULL DEFAULT NOW();
