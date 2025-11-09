@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
         isVerified: true,
         avatar: true,
         walletAddress: true,
+        preferredCurrency: true,
         createdAt: true,
       }
     });

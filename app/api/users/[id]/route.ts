@@ -20,6 +20,7 @@ export async function GET(
         avatar: true,
         bio: true,
         walletAddress: true,
+        preferredCurrency: true,
         isVerified: true,
         createdAt: true,
         _count: {
@@ -294,6 +295,7 @@ export async function PUT(
         avatar: true,
         bio: true,
         walletAddress: true,
+        preferredCurrency: true,
         isVerified: true,
         isSuspended: true,
         updatedAt: true,

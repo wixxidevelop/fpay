@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidCurrency } from './currencies';
 
 // User Validation Schemas
 export const userRegistrationSchema = z.object({
@@ -13,6 +14,12 @@ export const userRegistrationSchema = z.object({
   walletAddress: z.string()
     .regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address format')
     .optional(),
+  preferredCurrency: z.string()
+    .length(3, 'Currency must be a 3-letter ISO code')
+    .transform((v) => v.toUpperCase())
+    .refine((v) => isValidCurrency(v), 'Invalid currency code')
+    .optional()
+    .default('USD'),
 });
 
 export const userLoginSchema = z.object({
@@ -34,6 +41,11 @@ export const userUpdateSchema = z.object({
   avatar: z.string().url('Invalid avatar URL').optional(),
   walletAddress: z.string()
     .regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address format')
+    .optional(),
+  preferredCurrency: z.string()
+    .length(3, 'Currency must be a 3-letter ISO code')
+    .transform((v) => v.toUpperCase())
+    .refine((v) => isValidCurrency(v), 'Invalid currency code')
     .optional(),
   // Admin-only fields
   isVerified: z.boolean().optional(),

@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
         isVerified: true,
         avatar: true,
         walletAddress: true,
+        preferredCurrency: true,
         createdAt: true,
         updatedAt: true,
         _count: {

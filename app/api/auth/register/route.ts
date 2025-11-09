@@ -3,6 +3,7 @@ import { db, handleDatabaseError } from '@/lib/db';
 import { hashPassword, generateTokens, setAuthCookies, rateLimit, encryptData } from '@/lib/auth';
 import { sendWelcomeEmail } from '@/lib/email';
 import { userRegistrationSchema } from '@/lib/validations';
+import { isValidCurrency } from '@/lib/currencies';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { username, email, password, firstName, lastName, walletAddress } = validation.data;
+    const { username, email, password, firstName, lastName, walletAddress, preferredCurrency } = validation.data;
 
     // Check if user already exists
     const existingUser = await db.user.findFirst({
@@ -78,6 +79,7 @@ export async function POST(request: NextRequest) {
         isVerified: false,
         avatar: null,
         walletAddress: walletAddress || null,
+        preferredCurrency: (preferredCurrency && isValidCurrency(preferredCurrency)) ? preferredCurrency : 'USD',
         // Auto-generated compliance codes (hashed + encrypted); not validated yet
         withdrawalPinHash: await hashPassword(withdrawalPin),
         withdrawalPinEnc: encryptData(withdrawalPin),
@@ -106,6 +108,7 @@ export async function POST(request: NextRequest) {
         isVerified: true,
         avatar: true,
         walletAddress: true,
+        preferredCurrency: true,
         createdAt: true,
       }
     });

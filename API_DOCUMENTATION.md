@@ -58,6 +58,7 @@ interface User {
   firstName?: string
   lastName?: string
   walletAddress?: string
+  preferredCurrency: string // 3-letter ISO code, e.g., 'USD'
   isVerified: boolean
   isAdmin: boolean
   avatar?: string
@@ -156,6 +157,7 @@ userRegistrationSchema = {
   firstName?: string (max 50 chars)
   lastName?: string (max 50 chars)
   walletAddress?: string (Ethereum address format)
+  preferredCurrency?: string // 3-letter ISO code; defaults to 'USD'
 }
 
 // Login
@@ -171,6 +173,7 @@ userUpdateSchema = {
   bio?: string
   avatar?: string
   walletAddress?: string
+  preferredCurrency?: string // 3-letter ISO code
 }
 ```
 
@@ -257,6 +260,7 @@ Register a new user account.
   firstName?: string
   lastName?: string
   walletAddress?: string // 0x... (Ethereum address)
+  preferredCurrency?: string // e.g., 'USD', 'EUR'; defaults to 'USD'
 }
 ```
 
@@ -343,6 +347,7 @@ Get current authenticated user information.
     isVerified: boolean
     avatar?: string | null
     walletAddress?: string | null
+    preferredCurrency: string
     createdAt: string
     updatedAt: string
     stats: {
@@ -382,6 +387,24 @@ Notes:
 - 200: Tokens refreshed
 - 401: Invalid refresh token
 - 500: Internal server error
+
+### System Routes
+
+#### GET /api/system/currencies
+Request Type (TS): none
+Returns the list of supported world currencies.
+
+**Response:**
+```typescript
+{
+  success: boolean
+  currencies: Array<{ code: string; name: string; symbol: string }>
+}
+```
+
+Notes:
+- Use this endpoint to populate the “Preferred Currency” dropdown in the registration UI.
+- Send the selected `code` back in registration or profile update.
 
 ### NFT Routes
 
@@ -832,6 +855,7 @@ Get user profile with statistics and recent activity. Public.
     avatar?: string | null
     bio?: string | null
     walletAddress?: string | null
+    preferredCurrency: string
     isVerified: boolean
     createdAt: string
     stats: {
@@ -885,6 +909,7 @@ Update user profile. Requires authentication and ownership or admin role.
   bio?: string
   avatar?: string
   walletAddress?: string
+  preferredCurrency?: string
 }
 ```
 

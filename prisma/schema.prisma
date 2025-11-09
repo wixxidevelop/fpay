@@ -21,6 +21,7 @@ model User {
   firstName     String?
   lastName      String?
   walletAddress String?  @unique
+  preferredCurrency String @default("USD")
   isVerified    Boolean  @default(false)
   isSuspended   Boolean  @default(false)
   isAdmin       Boolean  @default(false)
@@ -67,6 +68,7 @@ model User {
   withdrawalRequests     WithdrawalRequest[]
 
   @@map("users")
+  @@index([preferredCurrency])
 }
 
 // User withdrawal requests
