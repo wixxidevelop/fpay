@@ -41,6 +41,12 @@ export async function POST(request: NextRequest) {
           { email },
           { username }
         ]
+      },
+      // Limit selected fields to avoid touching columns that may be missing
+      select: {
+        id: true,
+        email: true,
+        username: true,
       }
     });
 

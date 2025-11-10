@@ -22,6 +22,15 @@ export function handleDatabaseError(error: any) {
     };
   }
   
+  // Column does not exist – typically indicates migrations not applied in the target database
+  if (error.code === 'P2022') {
+    return {
+      success: false,
+      error: 'Database schema mismatch: column not found. Apply migrations to the database.',
+      details: error.meta,
+    };
+  }
+  
   if (error.code === 'P2025') {
     return {
       success: false,

@@ -4,12 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "prisma migrate deploy",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "npx prisma migrate reset --force && npm run db:seed",
     "db:add-admin": "tsx prisma/add-admin.ts",
+    "db:migrate:deploy": "npx prisma migrate deploy",
     "test": "jest",
     "postinstall": "prisma generate"
   },
